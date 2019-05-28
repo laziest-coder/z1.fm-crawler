@@ -10,57 +10,42 @@ session = requests.session()
 session.headers.update({'user-Agent': 'Mozilla/5.0 (Windows NT 6.2; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/32.0.1667.0 Safari/537.36', 'Accept': '*/*', 'Connection': 'keep-alive', 'origin': 'https://z1.fm'})
 
 def get_letters(base_url):
-
     index = session.get(base_url)
 
     if(index.status_code != 200):
         pass
 
     parsed = bs(index.text,"lxml")
-    letter_urls = []
     letters = parsed.select("div.edit-letter-spacing a")
 
     for letter in letters:
-        letter_urls.append(base_url+letter.get("href"))
-
-    return letter_urls
+        yield base_url+letter.get("href")
 
 
 def get_artists_list(letter_url):
-
     html = session.get(letter_url)
     parsed = bs(html.text,"lxml")
-    artists_list = []
     artists = parsed.select("div.songs-list-item div.song-wrap-xl div.song-xl a.song-play")
 
     for artist in artists:
         image = artist.select_one("div.song-img img.lazy")
-        artists_list.append({
+        yield {
             "image" : image.get("data-original"),
             "artist_url" : artist.get("href")
-        })
-        
-    return artists_list
+        }
 
 
 def get_artist_songs(artist_url):
-
     html = session.get(artist_url)
     parsed = bs(html.text,"lxml")
-    artist_songs = []
     songs = parsed.select("div.songs-list-item div.song-wrap-xl div.song-xl")
 
     for song in songs:
-        artist_songs.append(
-            {
-                "artist_name" : song.select_one("div.song-content div.song-artist a").text.strip(),
-                "song_name" : song.select_one("div.song-content div.song-name a").text.strip(),
-                "song_url" : "/download/"+song.get("data-play")
-            }
-        )
-    
-    return artist_songs
-
+        yield {
+            "artist_name" : song.select_one("div.song-content div.song-artist a").text.strip(),
+            "song_name" : song.select_one("div.song-content div.song-name a").text.strip(),
+            "song_url" : "/download/"+song.get("data-play")
+        }
 
 # pprint(get_artist_songs("https://z1.fm/artist/3182575?sort=view&page=81"))
 
