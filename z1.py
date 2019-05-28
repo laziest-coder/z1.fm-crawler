@@ -69,9 +69,7 @@ def add_song(artist,song_name,image,source,base):
 # pprint(get_artist_songs("https://z1.fm/artist/1861?sort=views&page=2"))
 
 def crawl(base_url):
-
-    letters = get_letters(base_url)
-    for letter in letters:
+    for letter in get_letters(base_url):
         print("Letter url: "+letter)
         i = 1
         check = True
@@ -80,30 +78,35 @@ def crawl(base_url):
             print("Letter page: "+str(i))
             if(requests.get(letter_url).status_code != 200):
                 break
-            letter_artists = get_artists_list(letter_url)
-            for artist in letter_artists:
+
+            for artist in get_artists_list(letter_url):
                 j = 1
                 checkIn = True
                 while(checkIn):
                     artist_url = base_url + artist["artist_url"] + "?sort=view&page=" + str(j)
                     artist_html = session.get(artist_url)
+
                     if(artist_html.status_code != 200):
                         break
+
                     artist_parsed = bs(artist_html.text,"lxml")
                     is_disabled = artist_parsed.select_one("div.paging")
                     artist_songs = artist_parsed.select("div.songs-list-item div.song-wrap-xl div.song-xl")
+
                     if not artist_songs:
                         break
-                    songs = get_artist_songs(artist_url)
-                    for song in songs:
+
+                    for song in get_artist_songs(artist_url):
                         add_song(song["artist_name"],song["song_name"],artist["image"],song["song_url"],artist_url)
+
                     if(is_disabled is None):
                         break
+                
                     if(is_disabled.select_one("a.next.disabled") is not None):
-                            break 
+                        break 
                     j = j + 1
                 # break # 1 artist
-            i = i + 1   
+            i = i + 1
             # break # 1 artist page
         break # 1 letter        
 
